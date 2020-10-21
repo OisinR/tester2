@@ -93,7 +93,8 @@ public class Wheel : MonoBehaviour {
         return Fx;
     }
 
-    float CalcLateralForce(float Fz, float slipAngle) {
+    float CalcLateralForce(float Fz, float slipAngle)
+    {
         Fz *= 0.001f;//convert to kN
         slipAngle *= (360f / (2 * Mathf.PI)); //convert angle to deg
         float uP = a[1] * Fz + a[2];
@@ -114,50 +115,70 @@ public class Wheel : MonoBehaviour {
         return CalcLongitudinalForce(Fz, slipAngle * maxAngle);
     }
 
-    Vector3 CombinedForce(float Fz, float slip, float slipAngle) {
+    Vector3 CombinedForce(float Fz, float slip, float slipAngle)
+    {
         float unitSlip = slip / maxSlip;
         float unitAngle = slipAngle / maxAngle;
         float p = Mathf.Sqrt(unitSlip * unitSlip + unitAngle * unitAngle);
-        if (p > Mathf.Epsilon) {
+        if (p > Mathf.Epsilon)
+        {
             if (slip < -0.8f)
+            {
                 return -localVelo.normalized * (Mathf.Abs(unitAngle / p * CalcLateralForceUnit(Fz, p)) + Mathf.Abs(unitSlip / p * CalcLongitudinalForceUnit(Fz, p)));
-            else {
+            }
+            else
+            {
                 Vector3 forward = new Vector3(0, -groundNormal.z, groundNormal.y);
                 return Vector3.right * unitAngle / p * CalcLateralForceUnit(Fz, p) + forward * unitSlip / p * CalcLongitudinalForceUnit(Fz, p);
             }
-        } else
+        }
+        else
+        {
             return Vector3.zero;
+        }
     }
 
-    void InitSlipMaxima() {
+    void InitSlipMaxima()
+    {
         const float stepSize = 0.001f;
         const float testNormalForce = 4000f;
         float force = 0;
-        for (float slip = stepSize; ; slip += stepSize) {
+        for (float slip = stepSize; ; slip += stepSize)
+        {
             float newForce = CalcLongitudinalForce(testNormalForce, slip);
             if (force < newForce)
+            {
                 force = newForce;
-            else {
+            }
+            else
+            {
                 maxSlip = slip - stepSize;
                 break;
             }
         }
         force = 0;
-        for (float slipAngle = stepSize; ; slipAngle += stepSize) {
+        for (float slipAngle = stepSize; ; slipAngle += stepSize)
+        {
             float newForce = CalcLateralForce(testNormalForce, slipAngle);
             if (force < newForce)
+            {
                 force = newForce;
-            else {
+            }
+            else
+            {
                 maxAngle = slipAngle - stepSize;
                 break;
             }
         }
     }
 
-    void Start() {
+    void Start()
+    {
         Transform trs = transform;
         while (trs != null && trs.GetComponent<Rigidbody>() == null)
+        {
             trs = trs.parent;
+        }
         if (trs != null)
             body = trs.GetComponent<Rigidbody>();
 
@@ -166,7 +187,8 @@ public class Wheel : MonoBehaviour {
         fullCompressionSpringForce = body.mass * massFraction * 2.0f * -Physics.gravity.y;
     }
 
-    Vector3 SuspensionForce() {
+    Vector3 SuspensionForce()
+    {
         float springForce = compression * fullCompressionSpringForce;
         normalForce = springForce;
 
@@ -175,13 +197,15 @@ public class Wheel : MonoBehaviour {
         return (springForce - damperForce + suspensionForceInput) * up;
     }
 
-    float SlipRatio() {
+    float SlipRatio()
+    {
         const float fullSlipVelo = 4.0f;
 
         float wheelRoadVelo = Vector3.Dot(wheelVelo, forward);
         if (wheelRoadVelo == 0)
+        {
             return 0;
-
+        }
         float absRoadVelo = Mathf.Abs(wheelRoadVelo);
         float damping = Mathf.Clamp01(absRoadVelo / fullSlipVelo);
 
@@ -190,14 +214,17 @@ public class Wheel : MonoBehaviour {
         return (wheelTireVelo - wheelRoadVelo) / absRoadVelo * damping;
     }
 
-    float SlipAngle() {
+    float SlipAngle()
+    {
         const float fullAngleVelo = 2.0f;
 
         Vector3 wheelMotionDirection = localVelo;
         wheelMotionDirection.y = 0;
 
         if (wheelMotionDirection.sqrMagnitude < Mathf.Epsilon)
+        {
             return 0;
+        }
 
         float sinSlipAngle = wheelMotionDirection.normalized.x;
         Mathf.Clamp(sinSlipAngle, -1, 1); // To avoid precision errors.
@@ -207,7 +234,8 @@ public class Wheel : MonoBehaviour {
         return -Mathf.Asin(sinSlipAngle) * damping * damping;
     }
 
-    Vector3 RoadForce() {
+    Vector3 RoadForce()
+    {
         int slipRes = (int)((100.0f - Mathf.Abs(angularVelocity)) / (10.0f));
         if (slipRes < 1)
             slipRes = 1;
@@ -220,7 +248,8 @@ public class Wheel : MonoBehaviour {
 
         Vector3 totalForce = Vector3.zero;
         float newAngle = maxSteeringAngle * steering;
-        for (int i = 0; i < slipRes; i++) {
+        for (int i = 0; i < slipRes; i++)
+        {
             float f = i * 1.0f / (float)slipRes;
             localRotation = Quaternion.Euler(0, oldAngle + (newAngle - oldAngle) * f, 0);
             inverseLocalRotation = Quaternion.Inverse(localRotation);
@@ -236,10 +265,14 @@ public class Wheel : MonoBehaviour {
             angularVelocity += driveAngularDelta;
 
             if (Mathf.Abs(angularVelocity) > frictionAngularDelta)
+            {
                 angularVelocity -= frictionAngularDelta * Mathf.Sign(angularVelocity);
-            else
-                angularVelocity = 0;
+            }
 
+            else
+            {
+                angularVelocity = 0;
+            }
 
 
             wheelVelo += worldForce * (1 / body.mass) * Time.deltaTime * invSlipRes;
@@ -254,23 +287,32 @@ public class Wheel : MonoBehaviour {
         oldAngle = newAngle;
         return totalForce;
     }
+
+
     public bool onGround;
-    void FixedUpdate() {
+
+
+    void FixedUpdate()
+    {
 
         Vector3 pos = transform.position;
         up = transform.up;
         RaycastHit hit;
         onGround = Physics.Raycast(pos, -up, out hit, suspensionTravel + radius);
-        if (hit.collider != null) {
+        if (hit.collider != null)
+        {
             groundName = hit.collider.gameObject.tag;
             Debug.DrawLine(model.transform.position, hit.point, Color.magenta);
         }
 
-        if (onGround && hit.collider.isTrigger) {
+        if (onGround && hit.collider.isTrigger)
+        {
             onGround = false; float dist = suspensionTravel + radius;
             RaycastHit[] hits = Physics.RaycastAll(pos, -up, suspensionTravel + radius);
-            foreach (RaycastHit test in hits) {
-                if (!test.collider.isTrigger && test.distance <= dist) {
+            foreach (RaycastHit test in hits)
+            {
+                if (!test.collider.isTrigger && test.distance <= dist)
+                {
                     hit = test;
                     onGround = true;
                     dist = test.distance;
@@ -278,7 +320,8 @@ public class Wheel : MonoBehaviour {
             }
         }
 
-        if (onGround) {
+        if (onGround)
+        {
             groundNormal = transform.InverseTransformDirection(inverseLocalRotation * hit.normal);
             compression = 1.0f - ((hit.distance - radius) / suspensionTravel);
             wheelVelo = body.GetPointVelocity(pos);
@@ -288,7 +331,8 @@ public class Wheel : MonoBehaviour {
             int speed = (int)(GetComponentInParent<Rigidbody>().velocity.magnitude * 3.6f);
 
             // if car is stopped , do the following to avoid slipping (currently as a whole instead of just sideways , #tbf)
-            if (speed == 0) {
+            if (speed == 0)
+            {
                 suspensionForce = new Vector3(0f, suspensionForce.y, 0f);
             }
 
@@ -299,7 +343,10 @@ public class Wheel : MonoBehaviour {
 
 
 
-        } else {
+        }
+
+        else
+        {
             compression = 0.0f;
             suspensionForce = Vector3.zero;
             roadForce = Vector3.zero;
@@ -318,10 +365,13 @@ public class Wheel : MonoBehaviour {
             slipVelo = 0;
         }
 
-        if (skid != null && Mathf.Abs(slipRatio) > 0.2) {
-            if (groundName == "Road")
-                lastSkid = skid.AddSkidMark(hit.point, hit.normal, Mathf.Abs(slipRatio) - 0.2f, lastSkid);
-        } else {
+        if (skid != null && Mathf.Abs(slipRatio) > 0.2)
+        {
+            lastSkid = skid.AddSkidMark(hit.point, hit.normal, Mathf.Abs(slipRatio) - 0.2f, lastSkid);
+            
+        }
+        else
+        {
             lastSkid = -1;
         }
 
@@ -329,7 +379,8 @@ public class Wheel : MonoBehaviour {
         rotation += angularVelocity * Time.deltaTime;
         angularVelocity = angularVelocity < -45f ? -45f : angularVelocity;
 
-        if (model != null) {
+        if (model != null)
+        {
             model.transform.localPosition = Vector3.up * (compression - 1.0f) * suspensionTravel;
             model.transform.localRotation = Quaternion.Euler(Mathf.Rad2Deg * rotation, maxSteeringAngle * steering, 0);
         }

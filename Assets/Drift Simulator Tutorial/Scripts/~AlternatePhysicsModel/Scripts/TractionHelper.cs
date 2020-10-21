@@ -22,11 +22,13 @@ public class TractionHelper : MonoBehaviour {
 	float angle;
 	float angularVelo;
 	
-	void Start () {
+	void Start ()
+    {
 		oldGrip = front[0].grip;
 	}
 	
-	void Update () {
+	void Update ()
+    {
 		Vector3 driveDir = transform.forward;
 		Vector3 veloDir = GetComponent<Rigidbody>().velocity;
 		veloDir -= transform.up * Vector3.Dot(veloDir, transform.up);
@@ -35,14 +37,18 @@ public class TractionHelper : MonoBehaviour {
 		angle = -Mathf.Asin(Vector3.Dot(Vector3.Cross(driveDir, veloDir), transform.up));
 		
 		angularVelo = GetComponent<Rigidbody>().angularVelocity.y;
-				
-		foreach( Wheel w in front)
-		{
-			if (angle * w.steering < 0)
-				w.grip = oldGrip * (1.0f - Mathf.Clamp01(compensationFactor*Mathf.Abs(angularVelo)));
-			else
-				w.grip = oldGrip;
-		}
+
+        foreach (Wheel w in front)
+        {
+            if (angle * w.steering < 0)
+            {
+                w.grip = oldGrip * (1.0f - Mathf.Clamp01(compensationFactor * Mathf.Abs(angularVelo)));
+            }
+            else
+            {
+                w.grip = oldGrip;
+            }
+        }
 		
 	}
 }
